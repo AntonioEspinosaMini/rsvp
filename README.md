@@ -223,6 +223,29 @@ sabe reescribir rutas. Si algún día molesta, moviendo el hosting a Cloudflare
 Pages o Vercel y añadiendo un `_redirects` con `/* /index.html 200` pasaría a
 ser `https://nuestraboda.es/x7g2`. No merece la pena antes de repartir nada.
 
+## Antes de repartir los enlaces
+
+Estado a 14/09/2026: los dos sitios están desplegados y el circuito funciona de
+punta a punta. Lo que falta no es código, es contenido y una compra.
+
+- [ ] **Rellenar `lib/wedding-info.ts`.** Se entrega con entradas `EJEMPLO —
+      sustituir`: hoy un invitado vería eso en la fecha, el timing, los hoteles,
+      las peluquerías y las barberías. Lo que no esté cerrado, déjalo en `[]` y
+      la sección entera desaparece (las demás se renumeran solas), así que se
+      puede salir con el formulario y la fecha e ir añadiendo el resto.
+- [ ] **Comprar el dominio** y hacer el cambio de "El dominio propio", aquí
+      arriba. Conviene hacerlo **antes** de la primera tanda de enlaces: si no,
+      los ya enviados apuntan a `usuario.github.io/rsvp/` y dependen de que
+      GitHub redirija al dominio nuevo conservando el `?t=`.
+- [ ] **Probar con un invitado de mentira**: darlo de alta en el gestor, copiar
+      su enlace, responder desde el móvil y comprobar que la respuesta aparece
+      en su ficha. Valida de una vez las reglas de Firestore, la creación del
+      documento y la importación de vuelta. Si el enlace dice "este enlace no
+      funciona", es que el documento no llegó a crearse: el gestor lo hace en
+      segundo plano y no avisa si falla.
+- [ ] *(Opcional, no bloquea)* **Renombrar el repo del gestor**, hoy `nalitos`
+      — ver la lista de abajo.
+
 ## Lo que queda pendiente
 
 - **El gestor sigue sin puerta.** Esto le quita el cartel de la entrada, pero
