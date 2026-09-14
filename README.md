@@ -190,6 +190,11 @@ los tres secrets de Firebase (los mismos del gestor):
 `NEXT_PUBLIC_FIREBASE_APP_ID`. Y en **Settings → Pages**, *Source: GitHub
 Actions*.
 
+Si falta alguno, el build se para en `next.config.js` en vez de publicar. Sin
+esa config el sitio compila igual y se despliega igual, pero a todo el que
+abriera su enlace le diría "este enlace no funciona" — un fallo silencioso en
+la única pantalla que ven trescientas personas.
+
 ### El dominio propio
 
 El sitio pasa por dos etapas y `next.config.js` distingue entre ellas él solo,

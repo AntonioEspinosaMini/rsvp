@@ -19,6 +19,25 @@ const isGithubPages = process.env.GITHUB_PAGES === 'true';
 const repo = process.env.GITHUB_REPOSITORY?.split('/')[1];
 const basePath = isGithubPages && !hasCustomDomain && repo ? `/${repo}` : '';
 
+// Sin la config de Firebase el sitio compila igual, se despliega igual, y a
+// todo el que abra su enlace le dice "este enlace no funciona". Un fallo así,
+// en la única pantalla que ven trescientas personas, no puede ser silencioso:
+// mejor que no llegue a publicarse.
+if (isGithubPages) {
+  const missing = [
+    'NEXT_PUBLIC_FIREBASE_API_KEY',
+    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+    'NEXT_PUBLIC_FIREBASE_APP_ID',
+  ].filter((name) => !process.env[name]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Falta la config de Firebase: ${missing.join(', ')}. ` +
+        'Son los mismos valores que los del gestor; añádelos como secrets del ' +
+        'repositorio — ver README > "Firebase".'
+    );
+  }
+}
+
 const nextConfig = {
   // Exportación 100% estática: genera la carpeta /out lista para GitHub Pages.
   output: 'export',
