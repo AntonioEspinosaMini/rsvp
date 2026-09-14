@@ -1,0 +1,5 @@
+# Nada de esto debe salir en un buscador: aquí hay teléfonos de peluquerías,
+# los hoteles con los que hemos hablado y el nombre del invitado que abre su
+# enlace. Se llega por el enlace que hemos repartido, no por Google.
+User-agent: *
+Disallow: /

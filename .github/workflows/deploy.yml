@@ -1,0 +1,73 @@
+name: Deploy a GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Los tres valores son los MISMOS que los del repo del gestor: el mismo
+      # proyecto de Firebase y la misma colección `rsvps`. Si aquí se pusieran
+      # otros, este sitio escribiría en una base de datos que el gestor no lee.
+      - name: Build estático (next export -> /out)
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+        run: npm run build
+
+      # `next export` no copia CNAME al /out por sí solo si no está en public/;
+      # al estar en public/ sí va, y con él GitHub Pages mantiene el dominio
+      # propio en cada despliegue (si no, se pierde en el primero).
+      - name: Comprobar el dominio propio
+        run: |
+          if [ -f out/CNAME ]; then
+            echo "Dominio propio: $(cat out/CNAME)"
+          else
+            echo "Sin public/CNAME: el sitio se publica en usuario.github.io/<repo>/."
+            echo "Al comprar el dominio, crea public/CNAME (ver README)."
+          fi
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artefacto
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Desplegar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

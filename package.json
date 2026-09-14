@@ -1,0 +1,29 @@
+{
+  "name": "wedding-rsvp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Boda de Antonio y Carmen — sitio público de confirmación de asistencia",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "clsx": "2.1.1",
+    "firebase": "12.18.0",
+    "lucide-react": "0.427.0",
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwind-merge": "2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.13",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.19",
+    "postcss": "8.5.26",
+    "tailwindcss": "3.4.7",
+    "typescript": "5.5.4"
+  }
+}
