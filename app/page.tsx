@@ -12,10 +12,10 @@
 // este sitio solo sabe hablar con Firestore, y solo del documento de su
 // propio token (ver `lib/rsvp-store.ts` y el README).
 //
-// Es lo primero que ven 300 personas que no son los novios, así que tiene
-// lenguaje propio: una portada a pleno día — papel crema, una luz de mediodía
-// arriba a la derecha — con los nombres a un tamaño que casi no cabe. Los
-// datos se editan en `lib/wedding-info.ts`.
+// Es lo primero que ve cada invitado, y la portada es suya, no nuestra: lo
+// que sale a un tamaño que casi no cabe es SU nombre, y los novios aparecen
+// abajo, firmando, como en una carta. Papel crema y una luz de mediodía
+// arriba a la derecha. Los datos se editan en `lib/wedding-info.ts`.
 
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
@@ -31,35 +31,38 @@ import { Container, Glow, Label, Masthead } from '@/components/shell';
 /** Retardo de una animación CSS de entrada, en ms. */
 const at = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 
-/** Los dos nombres, por separado, para componerlos a dos líneas. */
-const [NAME_A, NAME_B] = WEDDING.couple.split(/\s*&\s*/);
-
 /**
- * Un texto letra a letra: cada una asoma desde debajo de su línea base. Los
- * espacios se vuelven duros para no perderse entre `inline-block`s, y el
- * lector de pantalla lee la frase entera del elemento padre.
+ * Un texto letra a letra: cada una asoma desde debajo de su línea base. Va por
+ * palabras, cada una sin partir, para que un nombre compuesto ("María José")
+ * salte de línea entre palabras y no se salga de la pantalla. El lector de
+ * pantalla lee la frase entera del elemento padre.
  */
-function Letters({ text, start, step = 45 }: { text: string; start: number; step?: number }) {
+function Letters({ text, start, step = 55 }: { text: string; start: number; step?: number }) {
+  let n = 0;
   return (
     <>
-      {Array.from(text).map((ch, i) => (
-        <span key={i} className="inline-block animate-letter" style={at(start + i * step)}>
-          {ch === ' ' ? ' ' : ch}
+      {text.split(' ').map((word, w) => (
+        <span key={w}>
+          {w > 0 && ' '}
+          <span className="inline-block whitespace-nowrap">
+            {Array.from(word).map((ch, i) => (
+              <span key={i} className="inline-block animate-letter" style={at(start + n++ * step)}>
+                {ch}
+              </span>
+            ))}
+          </span>
         </span>
       ))}
     </>
   );
 }
 
-/** Un dato de la portada: una ficha de papel con rótulo arriba y valor debajo. */
-function Fact({ label, value, delay }: { label: string; value: string; delay: number }) {
+/** Un dato de la portada: rótulo a la izquierda, valor a la derecha. */
+function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="animate-rise rounded-[20px] bg-bone-50/80 px-4 py-3.5 shadow-soft ring-1 ring-ink-900/[0.05] backdrop-blur-sm"
-      style={at(delay)}
-    >
+    <div className="flex items-baseline justify-between gap-6 py-3.5">
       <dt className="text-[10.5px] font-medium uppercase tracking-[0.2em] text-ink-500">{label}</dt>
-      <dd className="mt-1 text-[15px] leading-snug text-ink-900">{value}</dd>
+      <dd className="text-right text-[15px] leading-snug text-ink-900">{value}</dd>
     </div>
   );
 }
@@ -78,7 +81,7 @@ function Cta() {
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teja text-bone-50" aria-hidden>
           <Check className="h-4 w-4" strokeWidth={2.25} />
         </span>
-        {answer.status === 'no_viene' ? 'Nos has dicho que no podrás venir' : 'Ya nos has confirmado'}
+        {answer.status === 'no_viene' ? 'Nos has dicho que no podrás venir' : '¡Vienes! Ya lo tenemos apuntado'}
         <span className="text-ink-500 underline decoration-ink-300 underline-offset-4 group-hover:decoration-teja">
           Cambiar
         </span>
@@ -101,7 +104,6 @@ function Cta() {
 
 function Hero() {
   const { firstName, token } = useGuest();
-  const hello = firstName ? `Hola, ${firstName}` : 'Hola';
 
   return (
     <header className="grain relative overflow-hidden">
@@ -112,48 +114,68 @@ function Hero() {
         </Container>
 
         <Container className="flex flex-1 flex-col justify-center py-10">
-          <p className="animate-rise font-display text-[clamp(1.6rem,6vw,2.4rem)] italic leading-none text-teja" style={at(400)}>
-            {hello}.
+          <p className="animate-rise" style={at(300)}>
+            <Label className="tabular-nums text-teja">Tu invitación · Nº {guestCode(token)}</Label>
           </p>
 
+          {/* El saludo es el titular: su nombre, a lo grande. Sin nombre en
+              el documento, "Hola." solo, al mismo tamaño. */}
           <h1
-            aria-label={`${WEDDING.couple} se casan`}
-            className="mt-5 font-display text-[clamp(4rem,min(26vw,20svh),13.5rem)] leading-[0.82] tracking-[-0.035em] text-ink-900"
+            aria-label={firstName ? `Hola, ${firstName}` : 'Hola'}
+            className="mt-6 font-display text-ink-900"
           >
-            <span aria-hidden className="block overflow-hidden pb-[0.08em]">
-              <Letters text={NAME_A} start={600} />
+            <span
+              aria-hidden
+              className="block overflow-hidden pb-[0.06em] text-[clamp(2.25rem,9vw,4.5rem)] italic leading-none text-teja"
+            >
+              <Letters text={firstName ? 'Hola,' : 'Hola.'} start={450} />
             </span>
-            <span aria-hidden className="block overflow-hidden pb-[0.1em] lg:pl-[18%]">
-              <span className="inline-block animate-letter pr-[0.12em] italic text-teja" style={at(900)}>
-                &amp;
+            {firstName && (
+              <span
+                aria-hidden
+                className="balance block overflow-hidden pb-[0.1em] text-[clamp(4.5rem,min(24vw,22svh),14rem)] leading-[0.85] tracking-[-0.035em]"
+              >
+                <Letters text={`${firstName}.`} start={750} />
               </span>
-              <Letters text={NAME_B} start={960} />
-            </span>
+            )}
           </h1>
 
-          <div className="mt-8 grid gap-10 sm:mt-10 lg:grid-cols-12 lg:gap-12">
-            <div className="lg:col-span-5">
-              <p className="max-w-[26rem] animate-rise text-[17px] leading-relaxed text-ink-600" style={at(1400)}>
-                Nos casamos y queremos que estés. Dinos si vienes y, de paso, te contamos cómo va a ser el día.
-              </p>
-              <div className="mt-8 animate-rise" style={at(1550)}>
-                <Countdown target={WEDDING.date_iso} />
+          <div className="mt-10 grid gap-10 sm:mt-12 lg:grid-cols-12 lg:gap-12">
+            <div className="lg:col-span-6">
+              {/* Una carta corta, de tú a tú, firmada por los dos. */}
+              <div className="max-w-[30rem] animate-rise" style={at(1300)}>
+                <p className="text-[18px] leading-relaxed text-ink-700">
+                  Nos casamos el {WEDDING.date_long.replace(/ de \d{4}$/, '')} y no nos imaginamos el día sin la gente
+                  que queremos. Por eso esta invitación es para ti.
+                </p>
+                <p className="mt-4 text-[18px] leading-relaxed text-ink-700">
+                  Aquí encontrarás cómo será el día, dónde alojarte y dónde arreglarte. Y cuando lo sepas, nos haría
+                  mucha ilusión que nos confirmaras si podrás acompañarnos.
+                </p>
+                <p className="mt-6 font-display text-[clamp(1.75rem,6vw,2.25rem)] italic leading-none text-ink-900">
+                  {WEDDING.couple.replace('&', 'y')}
+                </p>
               </div>
-              <div className="mt-10 animate-rise" style={at(1700)}>
+              <div className="mt-10 animate-rise" style={at(1500)}>
                 <Cta />
               </div>
             </div>
-            <dl className="grid gap-3 sm:grid-cols-3 lg:col-span-6 lg:col-start-7 lg:self-end">
-              <Fact label="Fecha" value={WEDDING.date_long} delay={1500} />
-              <Fact label="Lugar" value={WEDDING.venue} delay={1600} />
-              <Fact label="Ciudad" value={WEDDING.place} delay={1700} />
-            </dl>
-          </div>
-        </Container>
 
-        <Container>
-          <div className="flex animate-rise justify-end" style={at(1900)}>
-            <Label className="tabular-nums text-ink-400">Nº {guestCode(token)}</Label>
+            <div className="flex flex-col gap-8 lg:col-span-5 lg:col-start-8 lg:self-end">
+              <div className="animate-rise" style={at(1600)}>
+                <Countdown target={WEDDING.date_iso} />
+              </div>
+              {/* Los tres datos en una sola ficha de papel: apilados en tres
+                  tarjetas se comían media pantalla del móvil. */}
+              <dl
+                className="animate-rise divide-y divide-ink-900/[0.07] rounded-[22px] bg-bone-50/80 px-5 shadow-soft ring-1 ring-ink-900/[0.05] backdrop-blur-sm"
+                style={at(1700)}
+              >
+                <Fact label="Fecha" value={WEDDING.date_long} />
+                <Fact label="Lugar" value={WEDDING.venue} />
+                <Fact label="Ciudad" value={WEDDING.place} />
+              </dl>
+            </div>
           </div>
         </Container>
       </div>
@@ -165,8 +187,8 @@ function Hero() {
 function Marquee() {
   const item = `${WEDDING.couple} — ${WEDDING.date_long} — ${WEDDING.place} — `;
   return (
-    <div className="overflow-hidden border-y border-ink-900/10 py-5 sm:py-6" aria-hidden>
-      <div className="flex w-max animate-marquee whitespace-nowrap font-display text-[clamp(1.75rem,5vw,2.75rem)] leading-none text-ink-900">
+    <div className="overflow-hidden border-y border-ink-900/10 py-4 lg:py-3" aria-hidden>
+      <div className="flex w-max animate-marquee whitespace-nowrap font-display text-[clamp(1.5rem,5vw,2rem)] leading-none text-ink-900 lg:text-[1.625rem]">
         {Array.from({ length: 4 }, (_, i) => (
           <span key={i} className="pr-[0.3em]">
             {item.split('—').map((part, j, all) => (
@@ -183,16 +205,19 @@ function Marquee() {
 }
 
 export default function Home() {
+  const { firstName } = useGuest();
   return (
     <main>
       <Hero />
       <Marquee />
 
       <footer className="relative overflow-hidden">
-        <Glow className="rotate-180" />
-        <Container className="relative py-24 sm:py-32">
+        {/* Girada, la luz sale de abajo a la izquierda; la máscara (girada con
+            ella) la funde antes del borde para que no se corte en seco. */}
+        <Glow className="rotate-180 [mask-image:linear-gradient(to_bottom,transparent,black_45%)]" />
+        <Container className="relative pb-2 pt-24 sm:pt-32">
           <Reveal>
-            <Label className="text-teja">Hasta entonces</Label>
+            <Label className="text-teja">Hasta entonces{firstName ? `, ${firstName}` : ''}</Label>
             <p className="balance mt-6 font-display text-[clamp(3.5rem,17vw,11rem)] leading-[0.85] tracking-[-0.035em] text-ink-900">
               Nos vemos <em className="text-teja">allí</em>.
             </p>

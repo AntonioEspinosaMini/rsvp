@@ -173,7 +173,7 @@ function Resolve({ children }: { children: ReactNode }) {
   return (
     <GuestContext.Provider value={{ token, firstName, answer, answered, saved }}>
       {/* Hueco abajo para que el menú flotante nunca tape el final de la página. */}
-      <div className="pb-[calc(env(safe-area-inset-bottom)+7.5rem)]">{children}</div>
+      <div className="pb-[calc(env(safe-area-inset-bottom)+6.5rem)]">{children}</div>
       <BottomNav />
     </GuestContext.Provider>
   );
