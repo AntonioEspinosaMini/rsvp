@@ -2,18 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  overscroll-behavior-y: none;
+html {
+  /* El mismo papel que el body: el rebote de iOS no enseña otro color. */
+  background: theme('colors.bone.100');
 }
 
 body {
-  @apply bg-ink-50 text-ink-800 antialiased;
+  @apply bg-bone-100 text-ink-800 antialiased;
   -webkit-tap-highlight-color: transparent;
-}
-
-* {
-  -webkit-touch-callout: none;
+  font-feature-settings: 'ss01', 'cv11';
+  text-rendering: optimizeLegibility;
 }
 
 input,
@@ -23,34 +21,50 @@ select {
   font: inherit;
 }
 
+::selection {
+  background: theme('colors.teja.DEFAULT');
+  color: theme('colors.bone.50');
+}
+
+/* Anillo de foco visible y coherente en toda la página (teclado, no ratón). */
+:focus-visible {
+  outline: 2px solid theme('colors.teja.DEFAULT');
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 /* Solo lo que no se puede expresar con utilidades de Tailwind. Todo lo demás
    (color, ritmo, tipografía) vive en las clases de los componentes. */
 
-/* Grano finísimo sobre el degradado del fondo: sin él, los degradados grandes
-   en pantallas de móvil salen a bandas. Es ruido SVG, no una imagen: no pesa
-   nada y escala a cualquier densidad. */
-.rsvp-grain::after {
+/* Titulares cortos: que el navegador reparta las líneas, sin viudas. */
+.balance {
+  text-wrap: balance;
+}
+
+/* Grano finísimo sobre la luz de la portada. Sin él, el degradado sale a
+   bandas en pantallas de móvil. Es ruido SVG: no pesa y escala a todo. */
+.grain::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
   opacity: 0.35;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
-}
-
-/* Cursiva de la serif para los acentos del titular. Cormorant tiene una
-   itálica preciosa y es lo que separa esto de "una web con Times". */
-.rsvp-accent {
-  font-style: italic;
-  font-weight: 400;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Nada de fondos moviéndose para quien ha pedido menos movimiento. */
-  .animate-drift,
-  .animate-drift-slow,
-  .animate-scroll-cue {
+  /* Quien ha pedido menos movimiento lo ve todo ya en su sitio. */
+  .animate-rise,
+  .animate-letter,
+  .animate-rule,
+  .animate-tick,
+  .animate-marquee,
+  .animate-in-up {
     animation: none !important;
+  }
+  .animate-draw {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
   }
 }

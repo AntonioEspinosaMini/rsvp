@@ -1,88 +1,93 @@
 import type { Config } from 'tailwindcss';
 
-// La paleta y las fuentes son las mismas que las del gestor (repo `nalitos`):
-// es la misma boda. Aquí solo están las piezas que usa esta página — el gestor
-// tiene además las suyas (paneles, modales), que aquí no pintan nada.
+// La paleta y las fuentes son propias de esta página. Una boda de día: papel
+// crema en vez de pantalla blanca, texto en sepia en vez de negro, y el mismo
+// acento teja de siempre para lo que importa — la cursiva del nombre, el
+// dígito que cambia, el estado activo. El único color nuevo es `sol`, que
+// solo existe como luz de fondo, nunca como texto. El gestor (repo `nalitos`)
+// tiene la suya aparte.
 
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        // Serif elegante para títulos; sans neutra para el resto.
-        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-        // Monoespaciada para las etiquetas y los números de sección: es lo que
-        // le da el aire de pieza compuesta y no de plantilla.
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        // Serif de contraste alto y dibujo contemporáneo para lo grande; una
+        // grotesca apretada para todo lo demás. Dos familias, ni una más.
+        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+        sans: ['"Inter Tight"', 'Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       colors: {
-        // Rosa empolvado apagado: el acento de la boda, sin caer en lo cursi.
-        blush: {
-          50: '#fdf8f6',
-          100: '#f8ece7',
-          200: '#f0d8cf',
-          300: '#e2bcae',
-          400: '#cf9a86',
-          500: '#b97a63',
-          600: '#a0614c',
-          700: '#834d3d',
+        // Papel: crema cálido. 100 es el fondo; 50, las superficies que flotan
+        // (tarjetas, el menú); 200-300, filetes y rellenos suaves.
+        bone: {
+          50: '#fffcf7',
+          100: '#faf5ec',
+          200: '#f1e8d9',
+          300: '#e3d6c1',
         },
-        // Verde salvia para lo positivo (confirmado, descuento cerrado).
-        sage: {
-          50: '#f4f7f4',
-          100: '#e6ede6',
-          200: '#cbdccb',
-          300: '#a7c2a7',
-          400: '#7fa37f',
-          500: '#5f855f',
-          600: '#4b6a4b',
-          700: '#3d553d',
-        },
-        // Neutros cálidos: la base de toda la página.
+        // Sepia: del gris cálido de los textos secundarios al marrón de los
+        // titulares. Sigue llamándose `ink` porque hace de tinta, pero ya no es
+        // negra. ink-500 es el más claro que se usa para texto sobre crema
+        // (≥ 4.5:1).
         ink: {
-          50: '#faf9f7',
-          100: '#f3f1ed',
-          200: '#e7e3dc',
-          300: '#d4cec4',
-          400: '#a9a196',
-          500: '#7d746a',
-          600: '#5c554d',
-          700: '#413b35',
-          800: '#2b2723',
-          900: '#1a1714',
+          300: '#c4b39e',
+          400: '#9c8b77',
+          500: '#76665a',
+          600: '#5f5046',
+          700: '#4a3c33',
+          800: '#3b2f27',
+          900: '#2f241d',
+          950: '#231a14',
         },
+        // El acento. `DEFAULT` para texto y rellenos; `dark` para el pulsado.
+        teja: {
+          DEFAULT: '#a9441f',
+          dark: '#8a3517',
+          light: '#e5825a',
+        },
+        // Luz de mediodía para los degradados de fondo. Nunca como texto.
+        sol: '#f5d49c',
+      },
+      boxShadow: {
+        // Una sola escala de elevación, en sepia y no en negro: sobre crema,
+        // una sombra gris se ve sucia.
+        soft: '0 1px 2px rgba(47,36,29,0.04), 0 8px 24px -12px rgba(47,36,29,0.18)',
+        float: '0 2px 6px rgba(47,36,29,0.06), 0 18px 48px -16px rgba(47,36,29,0.38)',
       },
       keyframes: {
         'in-up': {
-          from: { opacity: '0', transform: 'translateY(8px)' },
+          from: { opacity: '0', transform: 'translateY(10px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
-        // Las manchas de color del fondo: se mueven muy despacio, lo justo
-        // para que la página no parezca una captura de pantalla.
-        drift: {
-          '0%, 100%': { transform: 'translate3d(0, 0, 0) scale(1)' },
-          '50%': { transform: 'translate3d(4%, -6%, 0) scale(1.12)' },
+        /* Entrada de la portada: sube y aparece. */
+        rise: {
+          from: { opacity: '0', transform: 'translateY(16px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
         },
-        'drift-slow': {
-          '0%, 100%': { transform: 'translate3d(0, 0, 0) scale(1.05)' },
-          '50%': { transform: 'translate3d(-5%, 5%, 0) scale(0.95)' },
+        /* Cada letra de los nombres asoma desde debajo de su línea base. */
+        letter: {
+          from: { transform: 'translateY(110%)' },
+          to: { transform: 'translateY(0)' },
         },
-        /* Carril del "sigue bajando". */
-        'scroll-cue': {
-          '0%': { transform: 'translateY(-40%)', opacity: '0' },
-          '35%, 65%': { opacity: '1' },
-          '100%': { transform: 'translateY(140%)', opacity: '0' },
-        },
+        /* Reglas que se trazan de un extremo a otro. */
+        rule: { from: { transform: 'scaleX(0)' }, to: { transform: 'scaleX(1)' } },
         /* Dibuja un trazo SVG (stroke-dasharray puesto desde el componente). */
         draw: { to: { strokeDashoffset: '0' } },
+        /* El segundo que entra en la cuenta atrás. Solo desplaza, nunca
+           oculta: si la animación se congela, el número sigue a la vista. */
+        tick: { from: { transform: 'translateY(-45%)' }, to: { transform: 'translateY(0)' } },
+        /* La cinta bajo la portada. */
+        marquee: { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
       },
       animation: {
-        'in-up': 'in-up 220ms ease-out',
-        drift: 'drift 26s ease-in-out infinite',
-        'drift-slow': 'drift-slow 34s ease-in-out infinite',
-        'scroll-cue': 'scroll-cue 2.4s ease-in-out infinite',
-        draw: 'draw 700ms 200ms cubic-bezier(0.65, 0, 0.35, 1) forwards',
+        'in-up': 'in-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        rise: 'rise 1100ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        letter: 'letter 1200ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        rule: 'rule 1400ms cubic-bezier(0.65, 0, 0.35, 1) both',
+        draw: 'draw 900ms 150ms cubic-bezier(0.65, 0, 0.35, 1) forwards',
+        tick: 'tick 420ms cubic-bezier(0.16, 1, 0.3, 1)',
+        marquee: 'marquee 40s linear infinite',
       },
     },
   },

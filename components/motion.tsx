@@ -143,38 +143,3 @@ export function Collapse({ open, children }: { open: boolean; children: ReactNod
     </div>
   );
 }
-
-/** Barra finísima arriba del todo con lo que llevas leído de la página. */
-export function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
-    };
-    // rAF para no recalcular en cada píxel de scroll (jank en móviles justos).
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
-
-  return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-px bg-transparent" aria-hidden>
-      <div
-        className="h-full origin-left bg-blush-400/70"
-        style={{ transform: `scaleX(${progress})` }}
-      />
-    </div>
-  );
-}

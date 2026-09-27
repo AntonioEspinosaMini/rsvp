@@ -1,9 +1,14 @@
 # Nuestra boda — confirmación de asistencia
 
-El sitio que reciben los invitados. Una sola página: cada uno abre **su**
-enlace (`https://<dominio>/?t=<token>`), dice si viene, deja lo que haga falta
-(alergias, transporte, la canción que no puede faltar) y, debajo, se encuentra
-el plan del día, los hoteles con los que hemos hablado y dónde arreglarse.
+El sitio que reciben los invitados. Cada uno abre **su** enlace
+(`https://<dominio>/?t=<token>`) y un menú flotante abajo le lleva por cinco
+páginas: inicio, el plan del día, confirmar (dice si viene y deja alergias,
+transporte, la canción que no puede faltar), los hoteles con los que hemos
+hablado y dónde arreglarse. Una página cuya lista está vacía en
+`lib/wedding-info.ts` desaparece del menú.
+
+El token se recuerda en el móvil (`localStorage`): quien vuelve sin el `?t=`
+— desde el historial, un acceso directo — sigue entrando como él.
 
 Sin login y sin registro: el enlace **es** la credencial.
 
@@ -164,19 +169,28 @@ siempre. Todo respeta `prefers-reduced-motion`.
 
 ```
 app/
-  layout.tsx        html/body, fuentes y el noindex
-  page.tsx          la página entera: estados, secciones y orden
-  globals.css       solo lo que Tailwind no puede expresar (grano, cursiva)
+  layout.tsx        html/body, fuentes, el noindex y GuestShell
+  template.tsx      la entrada suave de cada página al navegar
+  page.tsx          inicio: portada, cuenta atrás y la llamada a confirmar
+  el-dia/           el día hora a hora
+  confirmar/        el formulario
+  dormir/           hoteles
+  arreglarse/       peluquerías y barberías
+  globals.css       solo lo que Tailwind no puede expresar (grano, foco, selección)
 components/
+  guest.tsx         quién es el invitado (token de la URL o recordado) y los
+                    estados "cargando" / "enlace no válido"
+  nav.tsx           el menú flotante de abajo (máx. 5 destinos)
+  countdown.tsx     la cuenta atrás de la portada
   form.tsx          el formulario y el estado de "gracias"
-  motion.tsx        revelado al hacer scroll, colapsables, barra de progreso
+  motion.tsx        revelado al hacer scroll y colapsables
   places.tsx        hoteles, peluquerías, barberías
-  shell.tsx         fondo, contenedor y cabecera de sección
+  shell.tsx         contenedor, rótulo, cabecera de página y de sección
   timeline.tsx      el día hora a hora
 lib/
   rsvp-store.ts     Firestore + EL CONTRATO con el gestor
   wedding-info.ts   el contenido (esto es lo que se edita)
-  utils.ts          cn()
+  utils.ts          cn() y el número de invitación
 ```
 
 ## Despliegue

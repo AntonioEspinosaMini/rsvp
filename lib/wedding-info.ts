@@ -16,11 +16,15 @@ export const WEDDING = {
   /** Los dos nombres, tal cual se leen arriba del todo. */
   couple: 'Antonio & Carmen',
   /** Fecha larga, para el pie: "27 de junio de 2027". */
-  date_long: 'EJEMPLO — sustituir por la fecha',
+  date_long: '13 de noviembre de 2027',
   /** Fecha corta y numérica, para la esquina: "27.06.27". */
-  date_short: '00.00.00',
+  date_short: '13.11.27',
   /** Dónde es la boda, en una línea. */
   place: 'El Puerto de Santa María',
+  /** La iglesia, para la ficha de la portada. */
+  venue: 'Iglesia Prioral',
+  /** Inicio del día de la boda en hora peninsular (CET): el cero de la cuenta atrás. */
+  date_iso: '2027-11-13T00:00:00+01:00',
 };
 
 /** Un sitio recomendado: hotel, peluquería o barbería. */

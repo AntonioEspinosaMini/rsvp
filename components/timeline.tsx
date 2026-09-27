@@ -1,61 +1,51 @@
 'use client';
 
-// El día, hora a hora. La línea que une los puntos no está dibujada: crece de
-// arriba abajo según vas bajando, un tramo por parada. Es la única animación
-// de la página que cuenta algo — el paso del tiempo.
+// El día, hora a hora. Una tabla de horarios de las de antes, sobre una hoja
+// de papel: la hora en grande a la izquierda, lo que pasa a la derecha, un
+// filete entre cada fila que se traza al llegar a él. Sin nodos, sin líneas
+// de metro.
 
 import type { TimelineStop } from '@/lib/wedding-info';
 import { cn } from '@/lib/utils';
 import { EASE, useInView, useReducedMotion } from './motion';
 
-function Stop({ stop, last, index }: { stop: TimelineStop; last: boolean; index: number }) {
+function Stop({ stop, index }: { stop: TimelineStop; index: number }) {
   const { ref, seen } = useInView<HTMLLIElement>();
   const reduced = useReducedMotion();
   const on = seen || reduced;
-  const delay = reduced ? 0 : index * 90;
+  const delay = reduced ? 0 : index * 80;
 
   return (
-    <li ref={ref} className="grid grid-cols-[3.5rem_1.25rem_1fr]">
+    <li ref={ref} className="relative grid grid-cols-[5.5rem_1fr] gap-x-5 py-7 sm:grid-cols-[9rem_1fr] sm:gap-x-8">
+      {index > 0 && (
+        <span
+          aria-hidden
+          className={cn(
+            'absolute inset-x-0 top-0 h-px origin-left bg-ink-300 transition-transform duration-[1100ms] motion-reduce:transition-none',
+            on ? 'scale-x-100' : 'scale-x-0'
+          )}
+          style={{ transitionDelay: `${delay}ms`, transitionTimingFunction: EASE }}
+        />
+      )}
       <time
-        style={{ transitionDelay: `${delay}ms`, transitionTimingFunction: EASE }}
+        style={{ transitionDelay: `${delay + 80}ms`, transitionTimingFunction: EASE }}
         className={cn(
-          'pt-px font-mono text-[13px] tabular-nums text-blush-600 transition-opacity duration-700 motion-reduce:transition-none',
-          on ? 'opacity-100' : 'opacity-0'
+          'font-display text-[clamp(2rem,8vw,2.75rem)] leading-none tabular-nums text-ink-900 transition-[opacity,transform] duration-700 motion-reduce:transition-none',
+          on ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
         )}
       >
         {stop.time}
       </time>
-
-      <div className="flex h-full flex-col items-center" aria-hidden>
-        <span
-          style={{ transitionDelay: `${delay}ms`, transitionTimingFunction: EASE }}
-          className={cn(
-            'mt-[5px] h-[7px] w-[7px] flex-none rounded-full bg-blush-400 transition-transform duration-500 motion-reduce:transition-none',
-            on ? 'scale-100' : 'scale-0'
-          )}
-        />
-        {!last && (
-          <span
-            style={{ transitionDelay: `${delay + 120}ms`, transitionTimingFunction: EASE }}
-            className={cn(
-              'mt-1.5 w-px flex-1 origin-top bg-gradient-to-b from-ink-300/80 to-ink-200/40 transition-transform duration-[900ms] motion-reduce:transition-none',
-              on ? 'scale-y-100' : 'scale-y-0'
-            )}
-          />
-        )}
-      </div>
-
       <div
-        style={{ transitionDelay: `${delay + 60}ms`, transitionTimingFunction: EASE }}
+        style={{ transitionDelay: `${delay + 160}ms`, transitionTimingFunction: EASE }}
         className={cn(
-          'pb-8 transition-[opacity,transform] duration-700 motion-reduce:transition-none',
-          last && 'pb-0',
+          'pt-1 transition-[opacity,transform] duration-700 motion-reduce:transition-none',
           on ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
         )}
       >
-        <p className="text-[16px] leading-snug text-ink-800">{stop.title}</p>
-        {stop.place && <p className="mt-0.5 text-[13.5px] text-ink-500">{stop.place}</p>}
-        {stop.detail && <p className="mt-1.5 text-[13px] leading-relaxed text-ink-400">{stop.detail}</p>}
+        <p className="text-[18px] font-medium leading-snug text-ink-900">{stop.title}</p>
+        {stop.place && <p className="mt-1 text-[15px] text-ink-600">{stop.place}</p>}
+        {stop.detail && <p className="mt-2 text-[15px] leading-relaxed text-ink-500">{stop.detail}</p>}
       </div>
     </li>
   );
@@ -63,9 +53,9 @@ function Stop({ stop, last, index }: { stop: TimelineStop; last: boolean; index:
 
 export function Timeline({ stops }: { stops: TimelineStop[] }) {
   return (
-    <ol>
+    <ol className="rounded-[28px] bg-bone-50 px-6 py-2 shadow-soft ring-1 ring-ink-900/[0.05] sm:px-10 sm:py-4">
       {stops.map((stop, i) => (
-        <Stop key={`${stop.time}-${stop.title}`} stop={stop} index={i} last={i === stops.length - 1} />
+        <Stop key={`${stop.time}-${stop.title}`} stop={stop} index={i} />
       ))}
     </ol>
   );

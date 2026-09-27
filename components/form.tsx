@@ -3,15 +3,17 @@
 // El formulario de confirmación. Vive aparte de la página porque tiene toda
 // la interacción de la pieza: la elección, los campos que se despliegan, el
 // envío y el estado de "gracias" — que no es otra pantalla, sino esta misma
-// transformándose, para que el invitado no pierda de vista el resto de la
-// información al responder.
+// transformándose. Si vuelves a esta página con la respuesta ya dada, lo
+// primero que ves es ese resumen, no el formulario otra vez en blanco.
 
 import { useState, type ReactNode } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { rsvpStore, type GuestStatus, type RsvpAnswer } from '@/lib/rsvp-store';
-import { cn } from '@/lib/utils';
-import { Collapse, EASE, Reveal } from './motion';
-import { Mono } from './shell';
+import { cn, guestCode } from '@/lib/utils';
+import { Collapse, EASE } from './motion';
+import { NAV, useHref } from './nav';
+import { Label } from './shell';
 
 export interface RsvpFormState {
   status: GuestStatus;
@@ -21,78 +23,97 @@ export interface RsvpFormState {
   notes: string;
 }
 
-/** Una de las dos respuestas grandes. Ocupa media pantalla a propósito. */
+/**
+ * Una de las dos respuestas: una tarjeta a todo el ancho que, al elegirla, se
+ * llena de luz desde abajo y se enmarca en teja. La decisión se ve desde
+ * lejos, sin iconos ni colores de semáforo.
+ */
 function Choice({
   selected,
   onSelect,
   label,
   hint,
-  tone,
 }: {
   selected: boolean;
   onSelect: () => void;
   label: string;
   hint: string;
-  tone: 'yes' | 'no';
 }) {
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={selected}
       onClick={onSelect}
-      aria-pressed={selected}
-      style={{ transitionTimingFunction: EASE }}
       className={cn(
-        'group relative flex min-h-[6.75rem] flex-col justify-between overflow-hidden rounded-[1.25rem] p-4 text-left',
-        'transition-[background-color,color,box-shadow,transform] duration-500 active:scale-[0.98] motion-reduce:transition-none',
-        selected
-          ? tone === 'yes'
-            ? 'bg-sage-500 text-white shadow-lg shadow-sage-500/20'
-            : 'bg-ink-700 text-white shadow-lg shadow-ink-700/20'
-          : 'bg-white/70 text-ink-500 ring-1 ring-inset ring-ink-200 hover:bg-white hover:ring-ink-300'
+        'group relative flex w-full cursor-pointer items-center justify-between gap-4 overflow-hidden rounded-[24px] bg-bone-50 px-5 py-6 text-left text-ink-900 shadow-soft sm:px-7 sm:py-7',
+        'ring-inset transition-shadow duration-300 motion-reduce:transition-none',
+        selected ? 'ring-2 ring-teja' : 'ring-1 ring-ink-900/[0.06] hover:ring-ink-900/20'
       )}
+      style={{ transitionTimingFunction: EASE }}
     >
+      {/* El relleno sube desde abajo: el gesto de "marcar", no un cambio seco. */}
       <span
-        style={{ transitionTimingFunction: EASE }}
+        aria-hidden
         className={cn(
-          'flex h-6 w-6 items-center justify-center rounded-full transition-all duration-500 motion-reduce:transition-none',
-          selected ? 'scale-100 bg-white/25 opacity-100' : 'scale-50 opacity-0'
+          'absolute inset-0 origin-bottom bg-sol/35 transition-transform duration-500 motion-reduce:transition-none',
+          selected ? 'scale-y-100' : 'scale-y-0'
+        )}
+        style={{ transitionTimingFunction: EASE }}
+      />
+      <span className="relative flex items-center gap-4 sm:gap-5">
+        <span
+          aria-hidden
+          className={cn(
+            'flex h-5 w-5 flex-none items-center justify-center rounded-full border transition-colors duration-300',
+            selected ? 'border-teja' : 'border-ink-400 group-hover:border-ink-800'
+          )}
+        >
+          <span
+            className={cn(
+              'h-2.5 w-2.5 rounded-full bg-teja transition-transform duration-300 motion-reduce:transition-none',
+              selected ? 'scale-100' : 'scale-0'
+            )}
+          />
+        </span>
+        <span className="font-display text-[clamp(1.9rem,8vw,2.6rem)] leading-none tracking-[-0.01em]">{label}</span>
+      </span>
+      <span
+        className={cn(
+          'relative hidden text-[13px] min-[400px]:block',
+          selected ? 'text-ink-700' : 'text-ink-500'
         )}
       >
-        <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-      </span>
-      <span>
-        <span className="block font-display text-2xl leading-tight">{label}</span>
-        <span className={cn('mt-0.5 block text-[13px]', selected ? 'text-white/70' : 'text-ink-400')}>
-          {hint}
-        </span>
+        {hint}
       </span>
     </button>
   );
 }
 
 /**
- * Campo de una línea: sin caja, solo una regla abajo que se tiñe de rosa al
+ * Campo de una línea: sin caja, solo un filete abajo que se tiñe de teja al
  * enfocar. Menos ruido que un input con borde, y el gesto se ve.
  */
 function LineField({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="group block">
-      <Mono className="block text-ink-500">{label}</Mono>
-      <div className="relative mt-2">
+      <Label>{label}</Label>
+      <div className="relative mt-3">
         {children}
-        <span className="absolute inset-x-0 bottom-0 h-px bg-ink-200" aria-hidden />
+        <span className="absolute inset-x-0 bottom-0 h-px bg-ink-300" aria-hidden />
         <span
-          className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-blush-400 transition-transform duration-500 group-focus-within:scale-x-100 motion-reduce:transition-none"
+          className="absolute inset-x-0 bottom-0 h-[2px] origin-left scale-x-0 bg-teja transition-transform duration-500 group-focus-within:scale-x-100 motion-reduce:transition-none"
           style={{ transitionTimingFunction: EASE }}
           aria-hidden
         />
       </div>
-      {hint && <span className="mt-1.5 block text-[12.5px] text-ink-400">{hint}</span>}
+      {hint && <span className="mt-2 block text-[13px] text-ink-500">{hint}</span>}
     </label>
   );
 }
 
-const INPUT = 'w-full bg-transparent pb-2.5 text-[17px] text-ink-800 placeholder:text-ink-300 focus:outline-none';
+const INPUT =
+  'block w-full bg-transparent pb-3 text-[19px] leading-normal text-ink-900 placeholder:text-ink-300 focus:outline-none focus-visible:outline-none';
 
 /** Interruptor de verdad, no un checkbox: se entiende de un vistazo. */
 function Switch({
@@ -112,23 +133,23 @@ function Switch({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 py-1 text-left"
+      className="flex w-full cursor-pointer items-center justify-between gap-4 border-b border-ink-300 pb-5 text-left"
     >
       <span className="min-w-0">
-        <span className="block text-[15px] text-ink-800">{label}</span>
-        <span className="block text-[12.5px] text-ink-400">{hint}</span>
+        <span className="block text-[17px] text-ink-900">{label}</span>
+        <span className="mt-0.5 block text-[13px] text-ink-500">{hint}</span>
       </span>
       <span
         className={cn(
-          'relative h-7 w-[3.25rem] flex-none rounded-full transition-colors duration-300',
-          checked ? 'bg-sage-500' : 'bg-ink-200'
+          'relative h-8 w-14 flex-none rounded-full transition-colors duration-300',
+          checked ? 'bg-teja' : 'bg-bone-300'
         )}
       >
         <span
-          className="absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-300 motion-reduce:transition-none"
+          className="absolute top-1 h-6 w-6 rounded-full bg-bone-50 shadow-soft transition-transform duration-300 motion-reduce:transition-none"
           style={{
             transitionTimingFunction: EASE,
-            transform: `translateX(${checked ? '1.5rem' : '0.25rem'})`,
+            transform: `translateX(${checked ? '1.75rem' : '0.25rem'})`,
           }}
         />
       </span>
@@ -139,20 +160,20 @@ function Switch({
 /** El "hecho": un círculo y un palito que se dibujan solos. */
 function DrawnCheck() {
   return (
-    <svg viewBox="0 0 48 48" className="h-12 w-12" fill="none" aria-hidden>
+    <svg viewBox="0 0 48 48" className="h-14 w-14" fill="none" aria-hidden>
       <circle
         cx="24"
         cy="24"
-        r="21"
-        strokeWidth="1.5"
-        className="animate-draw stroke-sage-400 [stroke-dasharray:133] [stroke-dashoffset:133] motion-reduce:animate-none motion-reduce:[stroke-dashoffset:0]"
+        r="22"
+        strokeWidth="1.25"
+        className="animate-draw stroke-ink-900 [stroke-dasharray:139] [stroke-dashoffset:139]"
       />
       <path
         d="M15 24.5 21.5 31 33 18"
-        strokeWidth="2"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="animate-draw stroke-sage-500 [animation-delay:500ms] [stroke-dasharray:30] [stroke-dashoffset:30] motion-reduce:animate-none motion-reduce:[stroke-dashoffset:0]"
+        className="animate-draw stroke-teja [animation-delay:600ms] [stroke-dasharray:30] [stroke-dashoffset:30]"
       />
     </svg>
   );
@@ -160,10 +181,40 @@ function DrawnCheck() {
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-t border-ink-200/70 py-2.5 first:border-0">
-      <Mono>{label}</Mono>
-      <span className="min-w-0 text-right text-[14px] text-ink-700">{value}</span>
+    <div className="grid grid-cols-[7.5rem_1fr] items-baseline gap-4 border-t border-ink-300 py-4">
+      <dt>
+        <Label>{label}</Label>
+      </dt>
+      <dd className="min-w-0 break-words text-[16px] text-ink-900">{value}</dd>
     </div>
+  );
+}
+
+/** Las páginas a las que invitar tras confirmar, con su texto. */
+const NEXT_STEPS: Record<string, string> = {
+  '/el-dia/': 'Ver el plan del día',
+  '/dormir/': 'Dónde dormir',
+  '/arreglarse/': 'Dónde arreglarse',
+};
+
+// Solo las que salen en el menú: si una lista está vacía, tampoco se ofrece aquí.
+const nextSteps = NAV.filter((item) => item.href in NEXT_STEPS);
+
+/** Siguiente paso tras responder: una tarjeta hacia otra página del menú. */
+function Next({ href, label }: { href: string; label: string }) {
+  const withToken = useHref();
+  return (
+    <Link
+      href={withToken(href)}
+      className="group flex min-h-14 items-center justify-between gap-4 rounded-[20px] bg-bone-50 px-5 text-[16px] font-medium text-ink-900 shadow-soft ring-1 ring-ink-900/[0.06] transition-shadow hover:ring-teja"
+    >
+      {label}
+      <ArrowRight
+        className="h-4 w-4 text-teja transition-transform duration-500 group-hover:translate-x-1 motion-reduce:transition-none"
+        style={{ transitionTimingFunction: EASE }}
+        aria-hidden
+      />
+    </Link>
   );
 }
 
@@ -171,14 +222,16 @@ interface RsvpFormProps {
   token: string;
   firstName: string;
   initial: RsvpFormState;
-  /** Avisa a la página: con la respuesta enviada, sobra el botón flotante. */
-  onSentChange?: (sent: boolean) => void;
+  /** true si ya había respondido: se abre en el resumen, no en el formulario. */
+  answered: boolean;
+  /** Avisa al resto del sitio: el menú quita el punto de "sin responder". */
+  onSaved: (answer: RsvpFormState) => void;
 }
 
-export function RsvpForm({ token, firstName, initial, onSentChange }: RsvpFormProps) {
+export function RsvpForm({ token, firstName, initial, answered, onSaved }: RsvpFormProps) {
   const [form, setForm] = useState<RsvpFormState>(initial);
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState(answered);
   const [failed, setFailed] = useState(false);
 
   const comes = form.status === 'confirmado';
@@ -200,7 +253,7 @@ export function RsvpForm({ token, firstName, initial, onSentChange }: RsvpFormPr
     try {
       await rsvpStore.submitRsvp(token, answer);
       setSent(true);
-      onSentChange?.(true);
+      onSaved(form);
     } catch {
       setFailed(true);
     } finally {
@@ -210,75 +263,77 @@ export function RsvpForm({ token, firstName, initial, onSentChange }: RsvpFormPr
 
   if (sent) {
     return (
-      <div className="animate-in-up">
-        <DrawnCheck />
-        <p className="mt-5 font-display text-[clamp(2rem,8vw,2.6rem)] font-light leading-[1.05] text-ink-800">
-          Gracias{firstName ? `, ${firstName}` : ''}.
+      <div className="animate-in-up" role="status">
+        <div className="flex items-start justify-between gap-6">
+          <DrawnCheck />
+          <Label className="pt-2 tabular-nums">Nº {guestCode(token)}</Label>
+        </div>
+
+        <p className="balance mt-8 font-display text-[clamp(2.75rem,11vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-ink-900">
+          Gracias{firstName ? <>, <em className="text-teja">{firstName}</em></> : ''}.
         </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-500">
+        <p className="mt-5 max-w-[30rem] text-[17px] leading-relaxed text-ink-500">
           {comes
-            ? 'Lo tenemos todo apuntado. Sigue bajando para ver el plan del día y dónde quedarte.'
+            ? 'Lo tenemos todo apuntado. Si cambia algo, vuelve aquí cuando quieras: este enlace es tuyo.'
             : 'Qué pena que no puedas venir. Gracias por decírnoslo.'}
         </p>
 
-        <div className="mt-7">
+        <dl className="mt-10 rounded-[24px] bg-bone-50 px-5 shadow-soft ring-1 ring-ink-900/[0.05] sm:px-7 [&>div:first-child]:border-t-0">
           <SummaryRow label="Asistencia" value={comes ? 'Allí estaré' : 'No podré ir'} />
           {comes && form.allergies.trim() && <SummaryRow label="Alergias" value={form.allergies.trim()} />}
           {comes && form.transport && <SummaryRow label="Transporte" value="Sí, lo necesito" />}
           {comes && form.song_request.trim() && <SummaryRow label="Canción" value={form.song_request.trim()} />}
           {comes && form.notes.trim() && <SummaryRow label="Nota" value={form.notes.trim()} />}
-        </div>
+        </dl>
 
         <button
           type="button"
-          onClick={() => {
-            setSent(false);
-            onSentChange?.(false);
-          }}
-          className="mt-7 font-mono text-[11px] uppercase tracking-[0.18em] text-ink-400 underline decoration-ink-300 underline-offset-[6px] transition-colors hover:text-ink-700"
+          onClick={() => setSent(false)}
+          className="mt-8 inline-flex min-h-11 cursor-pointer items-center text-[13px] font-medium uppercase tracking-[0.18em] text-ink-900 underline decoration-ink-300 decoration-1 underline-offset-[7px] transition-colors hover:decoration-teja"
         >
           Cambiar mi respuesta
         </button>
+
+        {/* Con la respuesta dada, lo siguiente que suele querer saber. */}
+        {comes && nextSteps.length > 0 && (
+          <div className="mt-12 grid gap-3 sm:grid-cols-2">
+            {nextSteps.map((item) => (
+              <Next key={item.href} href={item.href} label={NEXT_STEPS[item.href]} />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3">
-        <Choice
-          selected={comes}
-          onSelect={() => set('status', 'confirmado')}
-          label="Allí estaré"
-          hint="No me lo pierdo"
-          tone="yes"
-        />
-        <Choice
-          selected={!comes}
-          onSelect={() => set('status', 'no_viene')}
-          label="No podré ir"
-          hint="Otra vez será"
-          tone="no"
-        />
+      <div role="radiogroup" aria-label="¿Vienes?" className="grid gap-3">
+        <Choice selected={comes} onSelect={() => set('status', 'confirmado')} label="Allí estaré" hint="No me lo pierdo" />
+        <Choice selected={!comes} onSelect={() => set('status', 'no_viene')} label="No podré ir" hint="Otra vez será" />
       </div>
 
       <Collapse open={comes}>
-        <div className="space-y-7 pt-9">
-          <LineField label="Alergias o intolerancias" hint="Se lo pasamos tal cual al catering.">
-            <input
-              className={INPUT}
-              value={form.allergies}
-              onChange={(e) => set('allergies', e.target.value)}
-              placeholder="Sin lactosa, sin frutos secos…"
-            />
-          </LineField>
+        <div className="grid gap-10 pt-14 sm:grid-cols-2 sm:gap-x-10">
+          <div className="sm:col-span-2">
+            <LineField label="Alergias o intolerancias" hint="Se lo pasamos tal cual al catering.">
+              <input
+                className={INPUT}
+                value={form.allergies}
+                onChange={(e) => set('allergies', e.target.value)}
+                placeholder="Sin lactosa, sin frutos secos…"
+              />
+            </LineField>
+          </div>
 
-          <Switch
-            checked={form.transport}
-            onChange={(v) => set('transport', v)}
-            label="Necesitaré transporte"
-            hint="Si sois varios, ponemos autobús."
-          />
+          <div className="sm:col-span-2">
+            <Switch
+              checked={form.transport}
+              onChange={(v) => set('transport', v)}
+              label="Necesitaré transporte"
+              hint="Si sois varios, ponemos autobús."
+            />
+          </div>
 
           <LineField label="La canción que no puede faltar">
             <input
@@ -291,7 +346,7 @@ export function RsvpForm({ token, firstName, initial, onSentChange }: RsvpFormPr
 
           <LineField label="Algo más que debamos saber">
             <textarea
-              rows={2}
+              rows={1}
               className={cn(INPUT, 'resize-none')}
               value={form.notes}
               onChange={(e) => set('notes', e.target.value)}
@@ -301,26 +356,38 @@ export function RsvpForm({ token, firstName, initial, onSentChange }: RsvpFormPr
         </div>
       </Collapse>
 
-      <Reveal delay={80}>
-        <button
-          type="button"
-          onClick={() => void submit()}
-          disabled={sending}
+      <button
+        type="button"
+        onClick={() => void submit()}
+        disabled={sending}
+        className={cn(
+          'group relative mt-14 flex h-[4.5rem] w-full cursor-pointer items-center justify-between overflow-hidden rounded-[24px] bg-teja px-6 text-bone-50 shadow-float sm:px-8',
+          'disabled:cursor-wait disabled:opacity-70'
+        )}
+      >
+        {/* Barrido más oscuro al pasar: de izquierda a derecha, bajo el texto. */}
+        <span
+          aria-hidden
+          className="absolute inset-0 origin-left scale-x-0 bg-teja-dark transition-transform duration-500 group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none"
           style={{ transitionTimingFunction: EASE }}
-          className={cn(
-            'mt-9 flex h-14 w-full items-center justify-center gap-2.5 rounded-full bg-ink-800 text-[15px] font-medium text-white',
-            'transition-[transform,box-shadow,background-color] duration-300 hover:-translate-y-0.5 hover:bg-ink-900 hover:shadow-xl hover:shadow-ink-800/20',
-            'active:translate-y-0 active:scale-[0.99] disabled:opacity-60',
-            'motion-reduce:transition-none motion-reduce:hover:translate-y-0'
-          )}
-        >
-          {sending && <Loader2 className="h-4 w-4 animate-spin" />}
+        />
+        <span className="relative text-[14px] font-medium uppercase tracking-[0.2em]">
           {sending ? 'Enviando' : 'Enviar mi respuesta'}
-        </button>
-      </Reveal>
+        </span>
+        <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden" aria-hidden>
+          {sending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <ArrowRight
+              className="h-5 w-5 transition-transform duration-500 group-hover:translate-x-1 motion-reduce:transition-none"
+              style={{ transitionTimingFunction: EASE }}
+            />
+          )}
+        </span>
+      </button>
 
       {failed && (
-        <p className="mt-3 text-center text-[13px] text-rose-600">
+        <p role="alert" className="mt-4 text-[14px] text-teja">
           No hemos podido guardarlo. Revisa la conexión y prueba otra vez.
         </p>
       )}
